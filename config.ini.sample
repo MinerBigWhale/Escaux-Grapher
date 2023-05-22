@@ -1,0 +1,16 @@
+[chromedriver]
+path = driver\chromedriver.exe
+
+[website]
+login = https://smptel.escaux.be/login.php
+phonesop1 = https://smptel.escaux.be/smp/00000001/phones_overview.php
+phonesop2 = https://smptel.escaux.be/smp/00000002/phones_overview.php
+directory = https://smptel.escaux.be/smp/00000000/import_directory.php
+ddi = https://smptel.escaux.be/smp/00000000/import_ddis.php
+phone = https://smptel.escaux.be/smp/00000000/import_resources.php?type=phone
+queue = https://smptel.escaux.be/smp/00000000/import_resources.php?type=queue
+netconsole = https://smptel.escaux.be/smp/00000000/import_resources.php?type=client
+
+[delay]
+cooldown = 1
+maxwait = 20
