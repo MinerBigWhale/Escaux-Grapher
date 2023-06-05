@@ -1,0 +1,13 @@
+chromedriver = 'driver\\chromedriver.exe'
+tempfolder = 'temp\\'
+database = 'temp\\db.sqlite'
+login = "https://stable-4.smptel.irisnet.be/"
+phonesop1 = "https://stable-4.smptel.irisnet.be/smp/00009985/phones_overview.php"
+phonesop2 = "https://stable-4.smptel.irisnet.be/smp/00009987/phones_overview.php"
+directory = "https://stable-4.smptel.irisnet.be/smp/00009984/import_directory.php"
+ddi = "https://stable-4.smptel.irisnet.be/smp/00009984/import_ddis.php"
+phone = "https://stable-4.smptel.irisnet.be/smp/00009984/import_resources.php?type=phone"
+queue = "https://stable-4.smptel.irisnet.be/smp/00009984/import_resources.php?type=queue"
+netconsole = "https://stable-4.smptel.irisnet.be/smp/00009984/import_resources.php?type=client"
+cooldown = 1
+maxwait = 20
