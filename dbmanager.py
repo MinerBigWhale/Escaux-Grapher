@@ -93,7 +93,7 @@ class Database:
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                                 (extension, description, department, site, phone1, phone2, assist, cfu, sdaction, team, alt, reception))
         except:
-            print('-')
+            sys.stdout.write('iu')
         
     def insert_queue(self, extension, description, department, site, oooh, lunch, holiday, sdaction, nomember, name):
         try:    
@@ -101,7 +101,7 @@ class Database:
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                                 (extension, description, department, site, oooh, lunch, holiday, sdaction, nomember, name))
         except:
-            print('-')
+            sys.stdout.write('iq')
         
     def insert_queuemember(self, aqa, queue, phone):
         try:
@@ -109,7 +109,7 @@ class Database:
                                 VALUES (?, ?, ?)''', 
                                 (aqa, queue, phone))
         except:
-            print('-')
+            sys.stdout.write('iqm')
         
     def insert_ivr(self, extension, description, department, site, oooh, lunch, holiday, noinput):
         try:
@@ -117,7 +117,7 @@ class Database:
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
                                 (extension, description, department, site, oooh, lunch, holiday, noinput))
         except:
-            print('-')
+            sys.stdout.write('ii')
         
     def insert_ivr_choice(self, ivr, dtmf, choice):
         try:
@@ -125,7 +125,7 @@ class Database:
                                 VALUES (?, ?, ?)''', 
                                 (ivr, dtmf, choice))
         except:
-            print('-')
+            sys.stdout.write('iic')
         
     def insert_redirection(self, origin, destination, type, description):
         try:
@@ -133,7 +133,7 @@ class Database:
                                 VALUES (?, ?, ?, ?)''', 
                                 (origin, destination, type, description))
         except:
-            print('insert_redirection')
+            sys.stdout.write('ir')
         
     def insert_phone(self, id, type, mac, ip, is_connected):
         try:
@@ -141,7 +141,7 @@ class Database:
                                 VALUES (?, ?, ?, ?, ?)''', 
                                 (id, type, mac, ip, is_connected))
         except:
-            print('-')
+            sys.stdout.write('ip')
         
     def insert_extension(self, id, type, description):
         try:
@@ -149,7 +149,7 @@ class Database:
                                 VALUES (?, ?, ?)''', 
                                 (id, type, description))
         except:
-            print('-')
+            sys.stdout.write('ie')
         
     def find_redirection_phone(self, queue_name, phone_id, redirection_type, description):
         try:
@@ -159,16 +159,17 @@ class Database:
                                 WHERE queues.name = ? AND (users.phone1 = ? OR users.phone2 = ?)''',
                                 (redirection_type, description, queue_name, phone_id, phone_id))
         except:
-            sys.stdout.write('p')
+            sys.stdout.write('frp')
     def find_redirection_user(self, queue_name, user_ext, redirection_type, description):
         try:
+            sys.stdout.write('''(?, ?, ?, ?)''',(user_ext, redirection_type, description, queue_name))
             self.cur.execute('''INSERT INTO redirection (origin, destination, type, description)
                                 SELECT queues.id, ?, ?, ?
                                 FROM queues,
                                 WHERE queues.name = ?''',
                                 (user_ext, redirection_type, description, queue_name))
         except:
-            sys.stdout.write('u')
+            sys.stdout.write('fru')
                             
     def commit(self):
         self.conn.commit()

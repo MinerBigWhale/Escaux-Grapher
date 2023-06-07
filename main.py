@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 from dbmanager import Database
 from download import WebView
 
-import config
 
 
 def resource_path(relative_path: str) -> str:
