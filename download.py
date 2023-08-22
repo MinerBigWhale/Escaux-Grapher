@@ -1,13 +1,17 @@
 import os
 import csv
 import sys
+import wget
 import glob
 import json
 import time
+import zipfile
+import requests
 from bs4 import BeautifulSoup
 from colorama import init, Fore
 from configparser import ConfigParser
 from selenium import webdriver
+from selenium.common.exceptions import SessionNotCreatedException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -48,11 +52,41 @@ def download_wait(path_to_downloads):
                 dl_wait = True
     print("|")
     return file_name
+    
+def findversion(array, version):
+    for item in array:
+        if item.get('version') == version:
+            return item
+    return None
+def findplatform(array, platform):
+    for item in array:
+        if item.get('platform') == platform:
+            return item
+    return None
+
+def update(version):     
+    
+    url = 'https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json'
+    response = requests.get(url)
+    json_data = response.json()
+    
+    version_item = findversion(json_data.get('versions'),version)
+    platform_item = findplatform(version_item.get('downloads').get('chromedriver'),"win64")
+    
+    download_url = platform_item.get('url')
+    latest_driver_zip = wget.download(download_url,'chromedriver.zip')
+
+    with zipfile.ZipFile(latest_driver_zip, 'r') as zip_ref:
+        zip_ref.extractall() # you can specify the destination folder path here
+    os.remove(latest_driver_zip)
+
           
 class WebView:
+    
     def __init__(self, config, db):
         self.config = config
         self.db = db
+        
         print(f"Connecting to SMP")
         with open("credential.json", "r") as f:
             credentials = json.load(f)
@@ -63,10 +97,20 @@ class WebView:
         DURATION = self.config.getint("delay", "cooldown")
         try :
             options = webdriver.ChromeOptions()
-            #options.add_argument('--headless')
+            options.add_argument('--headless')
             prefs = {"download.default_directory" : resource_path(DOWNLOAD_PATH)};
             options.add_experimental_option("prefs", prefs);
-            self.driver = webdriver.Chrome(resource_path(CHROME_DRIVER_PATH), options=options)
+            try :
+                self.driver = webdriver.Chrome(resource_path(CHROME_DRIVER_PATH), options=options)
+            except SessionNotCreatedException as err:
+                print(f"Unexpected {err=}: {err.msg=}")
+                if "Current browser version is " in err.msg:
+                    indexs = err.msg.find('Current browser version is ')
+                    indexe = err.msg.find(' with binary',indexs)
+                    version = err.msg[indexs+27:indexe]
+                    print(version)
+                    update(version)
+                    self.driver = webdriver.Chrome(resource_path(CHROME_DRIVER_PATH), options=options)
             URL = self.config.get("website", "login")
             self.driver.get(URL)
             self.driver.find_element(By.ID, 'login').click()
