@@ -99,6 +99,7 @@ def main():
     web.get_phones_status(1)
     web.get_phones_status(2)
     web.get_extensions()
+    web.get_ddi()
     web.get_queues()
     
     db.clean()

@@ -126,6 +126,7 @@ class WebView:
                 raise ConnectionError("login failed")
                 
             print("login success")
+            self.cookies = self.driver.get_cookies()
             
         except ConnectionError as err:
             print(f"Unexpected {err=}, {type(err)=}")
@@ -158,11 +159,50 @@ class WebView:
             for row in reader:
                 sys.stdout.write('.')
                 if 'SDX6' in row['RESOURCEID']:
+                    version = row['VERSION']
+                    if (row['INHERITS'] == 'SDX6Z001'):
+                        version = "ConnectMe Softphone"
+                        self.db.insert_phone(row['RESOURCEID'], row['DESCRIPTION'], version, row['MAC'], "unknown", 0)
+                    if (row['INHERITS'] == 'SDX6Z002'):
+                        version = "ConnectMe Lite"
+                        self.db.insert_phone(row['RESOURCEID'], row['DESCRIPTION'], version, row['MAC'], "unknown", 0)
+                    if (row['INHERITS'] == 'SDX6Z003'):
+                        version = "ConnectMe Softphone FMU"
+                        self.get_FMU(row['RESOURCEID'], row['DESCRIPTION'], version, row['MAC'])
+                    if (row['INHERITS'] == 'SDX6Z004'):
+                        version = "ConnectMe Lite FMU"
+                        self.get_FMU(row['RESOURCEID'], row['DESCRIPTION'], version, row['MAC'])
                     continue 
                     
-                self.db.insert_phone(row['RESOURCEID'], row['VERSION'], row['MAC'], "unknown", 0)
+                self.db.insert_phone(row['RESOURCEID'], row['DESCRIPTION'], row['VERSION'], row['MAC'], "unknown", 0)
         print('.')
-        self.db.commit()        
+        self.db.commit()   
+
+
+        
+    def get_ddi(self):
+        print(f"Getting DDI")
+        URL = self.config.get("website", "ddi")
+        WAIT = self.config.getint("delay", "maxwait")
+        self.driver.get(URL)
+        wait = WebDriverWait(self.driver, WAIT)
+        wait.until(EC.presence_of_all_elements_located((By.NAME, "templatedata")))
+        templatedata_form_radio = self.driver.find_element(By.CSS_SELECTOR, "input[type=radio][name=templatedata][value=all]")
+        templatedata_form_radio.click()
+        template_form_submit = self.driver.find_element(By.NAME, "template")
+        template_form_submit.click()
+        
+        DOWNLOAD_PATH = self.config.get("files", "tempfolder")
+        download_wait(DOWNLOAD_PATH)
+        ddi_file = glob.glob(os.path.join(DOWNLOAD_PATH, "import-ddi-*.csv"))
+        
+        with open(ddi_file[0]) as csv_file:
+            reader = csv.DictReader(csv_file, delimiter=';')
+            for row in reader:
+                sys.stdout.write('.')
+                self.db.insert_ddi(row['EXTERNAL'][1:], row['INTERNAL'][1:])
+        print('.')
+        self.db.commit()           
         
 
     
@@ -191,17 +231,36 @@ class WebView:
             row_data = [col.text.strip() for col in cols]
 
             if 'SDX6' in row_data[0]:
-                continue 
+                continue
                 
             # Set status color
             status = row_data[3].lower()
             if 'is registered' in status:
+                sys.stdout.write('+')
                 try: 
                     self.db.update_phone(row_data[0], ip=status[status.index('172'):-1], is_connected=1)
+                    sys.stdout.write(':')
                 except Exception as e:
                     print(f"E: {e} -> {status}")
         print('.')
-        self.db.commit()        
+        self.db.commit()       
+    
+    def get_FMU(self,phone,description,version,mac):
+        sys.stdout.write('*')
+        sys.stdout.flush()
+        URL = self.config.get("website", "fmu")+ mac[-8:]
+        #sys.stdout.write(URL[-25:])
+        session = requests.Session()
+        for cookie in self.cookies:
+            session.cookies.set(cookie['name'], cookie['value'])
+        response = session.get(URL)
+        json = response.json()
+        if json['msisdn'] is not None:
+            sys.stdout.write(str(json['msisdn']))
+            self.db.insert_phone(phone, description, version, mac, json['msisdn'], 1)
+        else:
+            self.db.insert_phone(phone, description, version, mac, "unknown", 0)
+        
                 
     def get_extensions(self):
         print(f"Getting extension list")
@@ -225,7 +284,7 @@ class WebView:
                 sys.stdout.write('.')
                 if "Template-CallQueuer." in row["PROFILE"]:
                     self.db.insert_extension(row["EXTENSION"][1:], 'Queue', row["FIRSTNAME"]+" "+row["LASTNAME"])
-                    self.db.insert_queue(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"], row["SITE"], row["VAR11"][1:], row["VAR13"][1:], row["VAR9"][1:], row["VAR15"][1:], row["VAR18"][1:], row["VAR2"][1:])
+                    self.db.insert_queue(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row["VAR11"][1:], row["VAR13"][1:], row["VAR9"][1:], row["VAR15"][1:], row["VAR18"][1:], row["VAR2"][1:])
                     
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR9"][1:],'unvail','holiday')
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR11"][1:],'unvail','oooh')
@@ -234,7 +293,7 @@ class WebView:
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR18"][1:],'unvail','no member')
                 if "Template-IVR." in row["PROFILE"]:
                     self.db.insert_extension(row["EXTENSION"][1:], 'IVR', row["FIRSTNAME"]+" "+row["LASTNAME"])
-                    self.db.insert_ivr(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"], row["SITE"], row["VAR4"][1:], row["VAR9"][1:], row["VAR2"][1:], row["VAR11"][1:])
+                    self.db.insert_ivr(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row["VAR4"][1:], row["VAR9"][1:], row["VAR2"][1:], row["VAR11"][1:])
 
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR2"][1:],'unvail','holiday')
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR4"][1:],'unvail','oooh')
@@ -252,7 +311,7 @@ class WebView:
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR41"][1:],'next','0')
                 if "Template-Manager-" in row["PROFILE"]:
                     self.db.insert_extension(row["EXTENSION"][1:], 'Manager', row["FIRSTNAME"]+" "+row["LASTNAME"])
-                    self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"], row["SITE"], row['PHONE1'], row['PHONE2'], row["VAR20"][1:], row["VAR18"][1:], row["VAR16"][1:], row["VAR31"][1:], row["VAR29"][1:], row["VAR40"][1:])
+                    self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row['PHONE1'], row['PHONE2'], row["VAR20"][1:], row["VAR18"][1:], row["VAR16"][1:], row["VAR31"][1:], row["VAR29"][1:], row["VAR40"][1:])
                     
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR20"][1:],'member','Assist')
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR18"][1:],'unvail','CFU')
@@ -266,7 +325,7 @@ class WebView:
                     self.db.find_redirection_user(row["VAR25"][1:], row["EXTENSION"][1:],'member','dyn')
                 if "Template-User-" in row["PROFILE"]:
                     self.db.insert_extension(row["EXTENSION"][1:], 'User', row["FIRSTNAME"]+" "+row["LASTNAME"])
-                    self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"], row["SITE"], row['PHONE1'], row['PHONE2'], row["VAR20"][1:], row["VAR18"][1:], row["VAR16"][1:], row["VAR31"][1:], row["VAR29"][1:], row["VAR40"][1:])
+                    self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row['PHONE1'], row['PHONE2'], row["VAR20"][1:], row["VAR18"][1:], row["VAR16"][1:], row["VAR31"][1:], row["VAR29"][1:], row["VAR40"][1:])
                     
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR20"][1:],'member','Assist')
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR18"][1:],'unvail','CFU')
@@ -278,6 +337,12 @@ class WebView:
                     self.db.find_redirection_user(row["VAR21"][1:], row["EXTENSION"][1:],'member','dyn')
                     self.db.find_redirection_user(row["VAR23"][1:], row["EXTENSION"][1:],'member','dyn')
                     self.db.find_redirection_user(row["VAR25"][1:], row["EXTENSION"][1:],'member','dyn')
+                if "Template-Fax" in row["PROFILE"]:
+                    self.db.insert_extension(row["EXTENSION"][1:], 'Fax', row["FIRSTNAME"]+" "+row["LASTNAME"])
+                    self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row['PHONE1'], row['PHONE2'], "", "", "", "", "", "")
+                if "Template-VirtualFax" in row["PROFILE"]:
+                    self.db.insert_extension(row["EXTENSION"][1:], 'Fax', row["FIRSTNAME"]+" "+row["LASTNAME"])
+                    self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row['PHONE1'], row['PHONE2'], "", "", "", "", "", "")
         print('.')
         self.db.commit()        
 
@@ -300,9 +365,10 @@ class WebView:
         with open(queue_file[0]) as csv_file:
             reader = csv.DictReader(csv_file, delimiter=';')
             for row in reader:
-                sys.stdout.write('.')
+                sys.stdout.write('.'+row["VAR1"][1:])
                 for phone in row['VAR11'][1:].split(','): #VAR11 = Members
+                    sys.stdout.write(';'+phone)
                     self.db.insert_queuemember(row["RESOURCEID"][1:], row["VAR1"][1:], phone)
                     self.db.find_redirection_phone(row["VAR1"][1:], phone,'member','sta')
-        print('.')
+            print(f".")
         self.db.commit()        

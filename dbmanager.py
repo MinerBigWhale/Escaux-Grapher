@@ -65,10 +65,15 @@ class Database:
                             )''')
             self.cur.execute('''CREATE TABLE phones (
                                 id TEXT PRIMARY KEY,
+                                description TEXT,
                                 type TEXT,
                                 mac TEXT,
                                 ip TEXT,
                                 isConnected BINARY
+                            )''')
+            self.cur.execute('''CREATE TABLE ddi (
+                                external TEXT PRIMARY KEY,
+                                internal TEXT
                             )''')
             self.cur.execute('''CREATE TABLE extension (
                                 id TEXT PRIMARY KEY,
@@ -135,13 +140,21 @@ class Database:
         except:
             sys.stdout.write('ir')
         
-    def insert_phone(self, id, type, mac, ip, is_connected):
+    def insert_phone(self, id, description, type, mac, ip, is_connected):
         try:
-            self.cur.execute('''INSERT INTO phones (id, type, mac, ip, isConnected) 
-                                VALUES (?, ?, ?, ?, ?)''', 
-                                (id, type, mac, ip, is_connected))
+            self.cur.execute('''INSERT INTO phones (id, description, type, mac, ip, isConnected) 
+                                VALUES (?, ?, ?, ?, ?, ?)''', 
+                                (id, description, type, mac, ip, is_connected))
         except:
             sys.stdout.write('ip')
+        
+    def insert_ddi(self, external, internal):
+        try:
+            self.cur.execute('''INSERT INTO ddi (external, internal) 
+                                VALUES (?, ?)''', 
+                                (external, internal))
+        except:
+            sys.stdout.write('id')
         
     def insert_extension(self, id, type, description):
         try:
@@ -153,21 +166,25 @@ class Database:
         
     def find_redirection_phone(self, queue_name, phone_id, redirection_type, description):
         try:
-            self.cur.execute('''INSERT INTO redirection (origin, destination, type, description)
-                                SELECT queues.id, users.extension, ?, ?
-                                FROM queues, users
-                                WHERE queues.name = ? AND (users.phone1 = ? OR users.phone2 = ?)''',
-                                (redirection_type, description, queue_name, phone_id, phone_id))
+            if phone_id != '':
+                self.cur.execute('''INSERT INTO redirection (origin, destination, type, description)
+                                    SELECT queues.extension, users.extension, ?, ?
+                                    FROM queues, users
+                                    WHERE queues.name = ? AND (users.phone1 = ? OR users.phone2 = ?)''',
+                                    (redirection_type, description, queue_name, phone_id, phone_id))
+                sys.stdout.write(':')
         except:
             sys.stdout.write('frp')
     def find_redirection_user(self, queue_name, user_ext, redirection_type, description):
+        if (queue_name == ""):
+            return
         try:
-            sys.stdout.write('''(?, ?, ?, ?)''',(user_ext, redirection_type, description, queue_name))
             self.cur.execute('''INSERT INTO redirection (origin, destination, type, description)
-                                SELECT queues.id, ?, ?, ?
-                                FROM queues,
+                                SELECT queues.extension, ?, ?, ?
+                                FROM queues
                                 WHERE queues.name = ?''',
                                 (user_ext, redirection_type, description, queue_name))
+            sys.stdout.write(':')
         except:
             sys.stdout.write('fru')
                             
