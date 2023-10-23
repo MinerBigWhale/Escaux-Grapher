@@ -162,19 +162,19 @@ class WebView:
                     version = row['VERSION']
                     if (row['INHERITS'] == 'SDX6Z001'):
                         version = "ConnectMe Softphone"
-                        self.db.insert_phone(row['RESOURCEID'], row['DESCRIPTION'], version, row['MAC'], "unknown", 0)
+                        self.db.insert_phone(row['RESOURCEID'], row['DESCRIPTION'], version, row['MAC'], row['RESTRICTION'], "unknown", 0)
                     if (row['INHERITS'] == 'SDX6Z002'):
                         version = "ConnectMe Lite"
-                        self.db.insert_phone(row['RESOURCEID'], row['DESCRIPTION'], version, row['MAC'], "unknown", 0)
+                        self.db.insert_phone(row['RESOURCEID'], row['DESCRIPTION'], version, row['MAC'], row['RESTRICTION'], "unknown", 0)
                     if (row['INHERITS'] == 'SDX6Z003'):
                         version = "ConnectMe Softphone FMU"
-                        self.get_FMU(row['RESOURCEID'], row['DESCRIPTION'], version, row['MAC'])
+                        self.get_FMU(row['RESOURCEID'], row['DESCRIPTION'], version, row['MAC'], row['RESTRICTION'])
                     if (row['INHERITS'] == 'SDX6Z004'):
                         version = "ConnectMe Lite FMU"
-                        self.get_FMU(row['RESOURCEID'], row['DESCRIPTION'], version, row['MAC'])
+                        self.get_FMU(row['RESOURCEID'], row['DESCRIPTION'], version, row['MAC'], row['RESTRICTION'])
                     continue 
                     
-                self.db.insert_phone(row['RESOURCEID'], row['DESCRIPTION'], row['VERSION'], row['MAC'], "unknown", 0)
+                self.db.insert_phone(row['RESOURCEID'], row['DESCRIPTION'], row['VERSION'], row['MAC'], row['RESTRICTION'], "unknown", 0)
         print('.')
         self.db.commit()   
 
@@ -245,7 +245,7 @@ class WebView:
         print('.')
         self.db.commit()       
     
-    def get_FMU(self,phone,description,version,mac):
+    def get_FMU(self,phone,description,version,mac,restrict):
         sys.stdout.write('*')
         sys.stdout.flush()
         URL = self.config.get("website", "fmu")+ mac[-8:]
@@ -257,9 +257,9 @@ class WebView:
         json = response.json()
         if json['msisdn'] is not None:
             sys.stdout.write(str(json['msisdn']))
-            self.db.insert_phone(phone, description, version, mac, json['msisdn'], 1)
+            self.db.insert_phone(phone, description, version, mac, restrict, json['msisdn'], 1)
         else:
-            self.db.insert_phone(phone, description, version, mac, "unknown", 0)
+            self.db.insert_phone(phone, description, version, mac, restrict, "unknown", 0)
         
                 
     def get_extensions(self):
@@ -311,7 +311,7 @@ class WebView:
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR41"][1:],'next','0')
                 if "Template-Manager-" in row["PROFILE"]:
                     self.db.insert_extension(row["EXTENSION"][1:], 'Manager', row["FIRSTNAME"]+" "+row["LASTNAME"])
-                    self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row['PHONE1'], row['PHONE2'], row["VAR20"][1:], row["VAR18"][1:], row["VAR16"][1:], row["VAR31"][1:], row["VAR29"][1:], row["VAR40"][1:])
+                    self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row["OFFICE"], row['PHONE1'], row['PHONE2'], row["VAR20"][1:], row["VAR18"][1:], row["VAR16"][1:], row["VAR31"][1:], row["VAR29"][1:], row["VAR40"][1:])
                     
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR20"][1:],'member','Assist')
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR18"][1:],'unvail','CFU')
@@ -325,7 +325,7 @@ class WebView:
                     self.db.find_redirection_user(row["VAR25"][1:], row["EXTENSION"][1:],'member','dyn')
                 if "Template-User-" in row["PROFILE"]:
                     self.db.insert_extension(row["EXTENSION"][1:], 'User', row["FIRSTNAME"]+" "+row["LASTNAME"])
-                    self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row['PHONE1'], row['PHONE2'], row["VAR20"][1:], row["VAR18"][1:], row["VAR16"][1:], row["VAR31"][1:], row["VAR29"][1:], row["VAR40"][1:])
+                    self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row["OFFICE"], row['PHONE1'], row['PHONE2'], row["VAR20"][1:], row["VAR18"][1:], row["VAR16"][1:], row["VAR31"][1:], row["VAR29"][1:], row["VAR40"][1:])
                     
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR20"][1:],'member','Assist')
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR18"][1:],'unvail','CFU')
@@ -339,10 +339,13 @@ class WebView:
                     self.db.find_redirection_user(row["VAR25"][1:], row["EXTENSION"][1:],'member','dyn')
                 if "Template-Fax" in row["PROFILE"]:
                     self.db.insert_extension(row["EXTENSION"][1:], 'Fax', row["FIRSTNAME"]+" "+row["LASTNAME"])
-                    self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row['PHONE1'], row['PHONE2'], "", "", "", "", "", "")
+                    self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row["OFFICE"], row['PHONE1'], row['PHONE2'], "", "", "", "", "", "")
                 if "Template-VirtualFax" in row["PROFILE"]:
                     self.db.insert_extension(row["EXTENSION"][1:], 'Fax', row["FIRSTNAME"]+" "+row["LASTNAME"])
-                    self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row['PHONE1'], row['PHONE2'], "", "", "", "", "", "")
+                    self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row["OFFICE"], row['PHONE1'], row['PHONE2'], "", "", "", "", "", "")
+                else:
+                    self.db.insert_extension(row["EXTENSION"][1:], 'User', row["FIRSTNAME"]+" "+row["LASTNAME"])
+                    self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row["OFFICE"], row['PHONE1'], row['PHONE2'], "", "", "", "", "", "")
         print('.')
         self.db.commit()        
 

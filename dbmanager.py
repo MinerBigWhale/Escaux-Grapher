@@ -12,12 +12,13 @@ class Database:
         
     def create_tables(self):
         try:
-            self.cur.execute('''CREATE TABLE users (
+            self.cur.execute('''CREATE TABLE IF NOT EXISTS users (
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 extension TEXT,
                                 description TEXT,
                                 department TEXT,
                                 site TEXT,
+                                office TEXT,
                                 phone1 TEXT,
                                 phone2 TEXT,
                                 assist TEXT,
@@ -27,7 +28,7 @@ class Database:
                                 alt TEXT,
                                 reception TEXT
                             )''')
-            self.cur.execute('''CREATE TABLE queues (
+            self.cur.execute('''CREATE TABLE IF NOT EXISTS queues (
                                 id TEXT PRIMARY KEY,
                                 extension TEXT,
                                 description TEXT,
@@ -40,13 +41,13 @@ class Database:
                                 nomember TEXT,
                                 name TEXT
                             )''')
-            self.cur.execute('''CREATE TABLE queuemember (
+            self.cur.execute('''CREATE TABLE IF NOT EXISTS queuemember (
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 aqa TEXT,
                                 queue TEXT,
                                 phone TEXT
                             )''')
-            self.cur.execute('''CREATE TABLE ivrs (
+            self.cur.execute('''CREATE TABLE IF NOT EXISTS ivrs (
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 extension TEXT,
                                 description TEXT,
@@ -57,46 +58,58 @@ class Database:
                                 holiday TEXT,
                                 noinput TEXT
                             )''')
-            self.cur.execute('''CREATE TABLE ivrchoise (
+            self.cur.execute('''CREATE TABLE IF NOT EXISTS ivrchoise (
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 ivr INTEGER,
                                 dtmf INTEGER,
                                 choise TEXT
                             )''')
-            self.cur.execute('''CREATE TABLE phones (
+            self.cur.execute('''CREATE TABLE IF NOT EXISTS phones (
                                 id TEXT PRIMARY KEY,
                                 description TEXT,
                                 type TEXT,
                                 mac TEXT,
                                 ip TEXT,
+                                restrict TEXT,
                                 isConnected BINARY
                             )''')
-            self.cur.execute('''CREATE TABLE ddi (
+            self.cur.execute('''CREATE TABLE IF NOT EXISTS ddi (
                                 external TEXT PRIMARY KEY,
                                 internal TEXT
                             )''')
-            self.cur.execute('''CREATE TABLE extension (
+            self.cur.execute('''CREATE TABLE IF NOT EXISTS extension (
                                 id TEXT PRIMARY KEY,
                                 type TEXT,
                                 description TEXT
                             )''')
-            self.cur.execute('''CREATE TABLE redirection (
+            self.cur.execute('''CREATE TABLE IF NOT EXISTS redirection (
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 origin TEXT,
                                 destination TEXT,
                                 type TEXT,
                                 description TEXT
                             )''')
+            self.cur.execute('''CREATE TABLE IF NOT EXISTS invoices (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                origin TEXT,
+                                date TEXT,
+                                time TEXT,
+                                destination TEXT,
+                                operator TEXT,
+                                country TEXT,
+                                duration INTEGER,
+                                cost REAL
+                            )''')
             self.conn.commit()
         except Exception as e:
             print(f"Failed to create tables: {e}")
             print(f"Ensure you are not connected to the DB")
             
-    def insert_user(self, extension, description, department, site, phone1, phone2, assist, cfu, sdaction, team, alt, reception):
+    def insert_user(self, extension, description, department, site, office, phone1, phone2, assist, cfu, sdaction, team, alt, reception):
         try:
-            self.cur.execute('''INSERT INTO users (extension, description, department, site, phone1, phone2, assist, cfu, sdaction, team, alt, reception)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                                (extension, description, department, site, phone1, phone2, assist, cfu, sdaction, team, alt, reception))
+            self.cur.execute('''INSERT INTO users (extension, description, department, site, office, phone1, phone2, assist, cfu, sdaction, team, alt, reception)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                                (extension, description, department, site, office, phone1, phone2, assist, cfu, sdaction, team, alt, reception))
         except:
             sys.stdout.write('iu')
         
@@ -140,11 +153,11 @@ class Database:
         except:
             sys.stdout.write('ir')
         
-    def insert_phone(self, id, description, type, mac, ip, is_connected):
+    def insert_phone(self, id, description, type, mac, restrict, ip, is_connected):
         try:
-            self.cur.execute('''INSERT INTO phones (id, description, type, mac, ip, isConnected) 
-                                VALUES (?, ?, ?, ?, ?, ?)''', 
-                                (id, description, type, mac, ip, is_connected))
+            self.cur.execute('''INSERT INTO phones (id, description, type, mac, restrict, ip, isConnected) 
+                                VALUES (?, ?, ?, ?, ?, ?, ?)''', 
+                                (id, description, type, mac, restrict, ip, is_connected))
         except:
             sys.stdout.write('ip')
         
@@ -162,7 +175,14 @@ class Database:
                                 VALUES (?, ?, ?)''', 
                                 (id, type, description))
         except:
-            sys.stdout.write('ie')
+            sys.stdout.write('ie') 
+    def insert_invoice(self, origin, date, time, destination, operator, country, duration, cost):
+        try:  
+            self.cur.execute('''INSERT INTO invoices (origin, date, time, destination, operator, country, duration, cost)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                            (origin, date, time, destination, operator, country, duration, cost))
+        except:
+            sys.stdout.write('ii') 
         
     def find_redirection_phone(self, queue_name, phone_id, redirection_type, description):
         try:

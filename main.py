@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 from dbmanager import Database
 from download import WebView
+from invoices import Invoices
 
 
 
@@ -94,13 +95,21 @@ def main():
     db = Database(db_file)
     print("Database Ready")
     
+    
+    
     web = WebView(config, db)
+    print("Webview Ready")
     web.get_phones()
     web.get_phones_status(1)
     web.get_phones_status(2)
     web.get_extensions()
     web.get_ddi()
     web.get_queues()
+    
+    
+    inv = Invoices(config, db)
+    print("Invoices Ready")
+    inv.get_invoices()
     
     db.clean()
     print("Database cleaned")
