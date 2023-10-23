@@ -1,15 +1,19 @@
-[chromedriver]
-path = driver\chromedriver.exe
+[files]
+chromedriver = chromedriver-win64\chromedriver.exe
+tempfolder = temp\
+invoices = invoices\
+database = temp\db.sqlite
 
 [website]
-login = https://smptel.escaux.be/login.php
-phonesop1 = https://smptel.escaux.be/smp/00000001/phones_overview.php
-phonesop2 = https://smptel.escaux.be/smp/00000002/phones_overview.php
-directory = https://smptel.escaux.be/smp/00000000/import_directory.php
-ddi = https://smptel.escaux.be/smp/00000000/import_ddis.php
-phone = https://smptel.escaux.be/smp/00000000/import_resources.php?type=phone
-queue = https://smptel.escaux.be/smp/00000000/import_resources.php?type=queue
-netconsole = https://smptel.escaux.be/smp/00000000/import_resources.php?type=client
+login = https://stable-4.smptel.irisnet.be/
+phonesop1 = https://stable-4.smptel.irisnet.be/smp/00000001/phones_overview.php
+phonesop2 = https://stable-4.smptel.irisnet.be/smp/00000002/phones_overview.php
+directory = https://stable-4.smptel.irisnet.be/smp/00000000/import_directory.php
+ddi = https://stable-4.smptel.irisnet.be/smp/00000000/import_ddis.php
+phone = https://stable-4.smptel.irisnet.be/smp/00000000/import_resources.php?type=phone
+queue = https://stable-4.smptel.irisnet.be/smp/00000000/import_resources.php?type=queue
+netconsole = https://stable-4.smptel.irisnet.be/smp/00000000/import_resources.php?type=client
+fmu = https://stable-4.smptel.irisnet.be/smp/00000000/run_app.php?id=47173&async=0&fmu=1&extension=ID
 
 [delay]
 cooldown = 1
