@@ -12,6 +12,7 @@ from colorama import init, Fore
 from configparser import ConfigParser
 from selenium import webdriver
 from selenium.common.exceptions import SessionNotCreatedException
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -64,13 +65,25 @@ def findplatform(array, platform):
             return item
     return None
 
-def update(version):     
-    
+def update():  
+    url = 'https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE'
+    version = requests.get(url).text
+    print(version)
     url = 'https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json'
     response = requests.get(url)
     json_data = response.json()
     
     version_item = findversion(json_data.get('versions'),version)
+    platform_item = findplatform(version_item.get('downloads').get('chrome'),"win64")
+    
+    download_url = platform_item.get('url')
+    latest_chrome_zip = wget.download(download_url,'chrome.zip')
+
+    with zipfile.ZipFile(latest_chrome_zip, 'r') as zip_ref:
+        zip_ref.extractall() # you can specify the destination folder path here
+    os.remove(latest_chrome_zip)
+    
+    
     platform_item = findplatform(version_item.get('downloads').get('chromedriver'),"win64")
     
     download_url = platform_item.get('url')
@@ -92,25 +105,21 @@ class WebView:
             credentials = json.load(f)
             username = credentials["username"]
             password = credentials["password"]
+        update()
+        CHROME_PATH = self.config.get("files", "chrome")
         CHROME_DRIVER_PATH = self.config.get("files", "chromedriver")
         DOWNLOAD_PATH = self.config.get("files", "tempfolder")
         DURATION = self.config.getint("delay", "cooldown")
         try :
             options = webdriver.ChromeOptions()
             options.add_argument('--headless')
+            options.binary_location = resource_path(CHROME_PATH)
             prefs = {"download.default_directory" : resource_path(DOWNLOAD_PATH)};
             options.add_experimental_option("prefs", prefs);
             try :
                 self.driver = webdriver.Chrome(resource_path(CHROME_DRIVER_PATH), options=options)
             except SessionNotCreatedException as err:
                 print(f"Unexpected {err=}: {err.msg=}")
-                if "Current browser version is " in err.msg:
-                    indexs = err.msg.find('Current browser version is ')
-                    indexe = err.msg.find(' with binary',indexs)
-                    version = err.msg[indexs+27:indexe]
-                    print(version)
-                    update(version)
-                    self.driver = webdriver.Chrome(resource_path(CHROME_DRIVER_PATH), options=options)
             URL = self.config.get("website", "login")
             self.driver.get(URL)
             self.driver.find_element(By.ID, 'login').click()

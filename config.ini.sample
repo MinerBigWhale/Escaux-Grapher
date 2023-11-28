@@ -1,5 +1,6 @@
 [files]
 chromedriver = chromedriver-win64\chromedriver.exe
+chrome = chrome-win64\chrome.exe
 tempfolder = temp\
 invoices = invoices\
 database = temp\db.sqlite
