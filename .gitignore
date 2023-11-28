@@ -129,6 +129,8 @@ env.bak/
 venv.bak/
 temp/
 invoices/
+chromedriver-win64/
+chrome-win64/
 
 # Spyder project settings
 .spyderproject
@@ -164,3 +166,7 @@ cython_debug/
 config.ini
 credential.json
 *.gephi
+
+
+
+
