@@ -378,6 +378,12 @@ class Database:
         #print(edges)
         return edges
         
+    def get_phones(self, ext):
+        self.cur.execute('''SELECT u.extension, u.description, u.office, p.id, p.ip, p.mac , p."type", p.description FROM phones as p
+                            LEFT JOIN users as u on p.id = u.phone1 or p.id = u.phone2
+                            WHERE u.extension = ? ''',(str(ext),))
+        return self.cur.fetchall()
+        
     def clean(self):
         self.cur.execute("DELETE FROM redirection WHERE origin IS NULL OR destination IS NULL OR origin = '' OR destination = ''")
         self.conn.commit()

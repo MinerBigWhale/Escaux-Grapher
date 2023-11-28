@@ -64,8 +64,14 @@ ensure you replaced 00000000 by your SMP Master SOPKey, 00000001 by your Primary
 
 Run the main script to Build the DB
 ``` bash
-Python Main.py
+Python main.py
 ```
+get phone's information for an extension 
+``` bash
+Python main.py -c --getphones <ext>
+```
+-c option is to avoid data-crawling 
+
 
 You can explore the DB Using DBeaver and adding a connection to the SQLite DB File in the temp forlder.
 

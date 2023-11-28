@@ -4,6 +4,7 @@ import sys
 import glob
 import json
 import time
+import getopt
 from colorama import init, Fore
 from configparser import ConfigParser
 import networkx as nx
@@ -79,16 +80,54 @@ def outputgraph():
 
   
     
-def main():
+def main(argv):
     global config, db, web
     config = ConfigParser()
     config.read("config.ini")
     print("configuration loaded")
     
-    TMP_PATH = config.get("files", "tempfolder")
-    tmp_forlder = resource_path(TMP_PATH)
-    empty_folder(tmp_forlder)
-    print("temp folder cleaned")
+    u = False
+    i = False
+    c = False
+    driverversion = None
+    gp = False
+    ext = 0
+    gr = False
+    
+    opts, args = getopt.getopt(argv,"huicd:",["help","update","invoice","cache","graph","chromedriver-version=","getphones="])
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            print ('''
+usage python main.py [-h | --help] [-u | --update] [-i | --invoice] [-c | --cache] [-d <version>| --chromedriver-version <version>] [--getphones <extension> | --graph]
+
+-h  --help                  Print this help text
+-u  --update                Do not flush the DB and update exiting value (Not recommended)
+-i  --invoice               Parse Invoices
+-c  --cache                 Use existing DB and do not refresh data (Not recommended)
+-d  --chromedriver-version  Download a specific version of chrome portable and chromedriver (ex: 119.0.6045.105)
+--getphones                 Returns the ressources corresponding to this extension and corresponding IP (use with -c argument)
+--graph                     Displya graphical representation of relations between numbers (better use gephy)''')
+            sys.exit()
+        elif opt in ("-u", "--update"):
+            u = True
+        elif opt in ("-i", "--invoice"):
+            i = True
+        elif opt in ("-c", "--cache"):
+            c = True
+            u = True
+        elif opt in ("-d", "--chromedriver-version"):
+            driverversion = arg
+        elif opt in ("--getphones"):
+            gp = True
+            ext = arg
+        elif opt in ("--graph"):
+            gr = True
+    
+    if u == False:    
+        TMP_PATH = config.get("files", "tempfolder")
+        tmp_forlder = resource_path(TMP_PATH)
+        empty_folder(tmp_forlder)
+        print("temp folder cleaned")
     
     DB_PATH = config.get("files", "database")
     db_file = resource_path(DB_PATH)
@@ -96,27 +135,33 @@ def main():
     print("Database Ready")
     
     
+    if c == False:
+        web = WebView(config, db, driverversion)
+        print("Webview Ready")
+        web.get_phones()
+        web.get_phones_status(1)
+        web.get_phones_status(2)
+        web.get_extensions()
+        web.get_ddi()
+        web.get_queues()
     
-    web = WebView(config, db)
-    print("Webview Ready")
-    web.get_phones()
-    web.get_phones_status(1)
-    web.get_phones_status(2)
-    web.get_extensions()
-    web.get_ddi()
-    web.get_queues()
-    
-    
-    inv = Invoices(config, db)
-    print("Invoices Ready")
-    inv.get_invoices()
+        
+        if i == True:
+            inv = Invoices(config, db)
+            print("Invoices Ready")
+            inv.get_invoices()
     
     db.clean()
     print("Database cleaned")
     
-    #outputgraph()
+    if gr :
+        outputgraph()
+        sys.exit()
+    if gp :
+        for result in db.get_phones(ext):
+            print(result)
+        sys.exit()
     
     
 if __name__ == "__main__":
-    main()
-    
+    main(sys.argv[1:])

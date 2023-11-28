@@ -65,10 +65,12 @@ def findplatform(array, platform):
             return item
     return None
 
-def update():  
-    url = 'https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE'
-    version = requests.get(url).text
+def update(version):  
+    if version == None :
+        url = 'https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE'
+        version = requests.get(url).text
     print(version)
+    
     url = 'https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json'
     response = requests.get(url)
     json_data = response.json()
@@ -85,7 +87,7 @@ def update():
     
     
     platform_item = findplatform(version_item.get('downloads').get('chromedriver'),"win64")
-    
+    print()
     download_url = platform_item.get('url')
     latest_driver_zip = wget.download(download_url,'chromedriver.zip')
 
@@ -96,7 +98,7 @@ def update():
           
 class WebView:
     
-    def __init__(self, config, db):
+    def __init__(self, config, db, version=None):
         self.config = config
         self.db = db
         
@@ -105,7 +107,7 @@ class WebView:
             credentials = json.load(f)
             username = credentials["username"]
             password = credentials["password"]
-        update()
+        update(version)
         CHROME_PATH = self.config.get("files", "chrome")
         CHROME_DRIVER_PATH = self.config.get("files", "chromedriver")
         DOWNLOAD_PATH = self.config.get("files", "tempfolder")
@@ -300,7 +302,7 @@ class WebView:
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR13"][1:],'unvail','lunch')
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR15"][1:],'unvail','sec act')
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR18"][1:],'unvail','no member')
-                if "Template-IVR." in row["PROFILE"]:
+                elif "Template-IVR." in row["PROFILE"]:
                     self.db.insert_extension(row["EXTENSION"][1:], 'IVR', row["FIRSTNAME"]+" "+row["LASTNAME"])
                     self.db.insert_ivr(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row["VAR4"][1:], row["VAR9"][1:], row["VAR2"][1:], row["VAR11"][1:])
 
@@ -318,7 +320,7 @@ class WebView:
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR35"][1:],'next','8')
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR38"][1:],'next','9')
                     self.db.insert_redirection(row["EXTENSION"][1:], row["VAR41"][1:],'next','0')
-                if "Template-Manager-" in row["PROFILE"]:
+                elif "Template-Manager-" in row["PROFILE"]:
                     self.db.insert_extension(row["EXTENSION"][1:], 'Manager', row["FIRSTNAME"]+" "+row["LASTNAME"])
                     self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row["OFFICE"], row['PHONE1'], row['PHONE2'], row["VAR20"][1:], row["VAR18"][1:], row["VAR16"][1:], row["VAR31"][1:], row["VAR29"][1:], row["VAR40"][1:])
                     
@@ -332,7 +334,7 @@ class WebView:
                     self.db.find_redirection_user(row["VAR21"][1:], row["EXTENSION"][1:],'member','dyn')
                     self.db.find_redirection_user(row["VAR23"][1:], row["EXTENSION"][1:],'member','dyn')
                     self.db.find_redirection_user(row["VAR25"][1:], row["EXTENSION"][1:],'member','dyn')
-                if "Template-User-" in row["PROFILE"]:
+                elif "Template-User-" in row["PROFILE"]:
                     self.db.insert_extension(row["EXTENSION"][1:], 'User', row["FIRSTNAME"]+" "+row["LASTNAME"])
                     self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row["OFFICE"], row['PHONE1'], row['PHONE2'], row["VAR20"][1:], row["VAR18"][1:], row["VAR16"][1:], row["VAR31"][1:], row["VAR29"][1:], row["VAR40"][1:])
                     
@@ -346,10 +348,10 @@ class WebView:
                     self.db.find_redirection_user(row["VAR21"][1:], row["EXTENSION"][1:],'member','dyn')
                     self.db.find_redirection_user(row["VAR23"][1:], row["EXTENSION"][1:],'member','dyn')
                     self.db.find_redirection_user(row["VAR25"][1:], row["EXTENSION"][1:],'member','dyn')
-                if "Template-Fax" in row["PROFILE"]:
+                elif "Template-Fax" in row["PROFILE"]:
                     self.db.insert_extension(row["EXTENSION"][1:], 'Fax', row["FIRSTNAME"]+" "+row["LASTNAME"])
                     self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row["OFFICE"], row['PHONE1'], row['PHONE2'], "", "", "", "", "", "")
-                if "Template-VirtualFax" in row["PROFILE"]:
+                elif "Template-VirtualFax" in row["PROFILE"]:
                     self.db.insert_extension(row["EXTENSION"][1:], 'Fax', row["FIRSTNAME"]+" "+row["LASTNAME"])
                     self.db.insert_user(row["EXTENSION"][1:], row["FIRSTNAME"]+" "+row["LASTNAME"], row["DEPARTMENT"][1:], row["SITE"], row["OFFICE"], row['PHONE1'], row['PHONE2'], "", "", "", "", "", "")
                 else:
